@@ -1,0 +1,36 @@
+@use './../styles/components/responsive' as *;
+
+.header {
+  grid-row: 1/2;
+  grid-column: 1/1;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: 55px;
+  background: #000000;
+  user-select: none;
+  isolation: isolate;
+
+  ul {
+    height: 100%;
+    padding: 0.7rem 1.5rem;
+
+    @media (max-width: 600px) {
+      padding: 0.7rem 0.7rem;
+    }
+  }
+}
+
+a.logo {
+  svg {
+    --r: 32px;
+    width: auto !important;
+    height: var(--r) !important;
+  }
+    transition-duration: .2s;    transition-property: transform;forced-color-adjust: auto;
+  &:hover {
+    transform: scale(1.04);
+  }
+}

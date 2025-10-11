@@ -1,0 +1,30 @@
+{
+  "name": "Map3",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@fluentui/react-components": "^9.70.0",
+    "@tanstack/react-query": "^5.89.0",
+    "jdenticon": "^3.3.0",
+    "leaflet": "^1.9.4",
+    "moment": "^2.30.1",
+    "next": "15.5.3",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "sass": "^1.93.0",
+    "viem": "~2.37.7",
+    "wagmi": "^2.17.1",
+    "web3": "^4.16.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.3"
+  }
+}
