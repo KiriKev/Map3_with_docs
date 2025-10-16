@@ -8,7 +8,9 @@ import { useWaitForTransactionReceipt, useAccount, useWriteContract } from 'wagm
 import { initIssueContract, getIssueCount, getIssues } from '@/util/communication'
 import { getProfile } from '@/util/api'
 import Web3 from 'web3'
-import L, { geoJSON } from 'leaflet'
+
+
+
 import './../../node_modules/leaflet/dist/leaflet.css'
 import { useClientMounted } from '@/hooks/useClientMount'
 import { config } from '@/config/wagmi'
@@ -19,6 +21,7 @@ import Profile from '@/app/ui/Profile'
 import MarkerIcon from '@/../public/marker-icon.png'
 import { MapSearchIcon, BlueCheckMarkIcon, ThreeDotIcon } from '@/components/Icons'
 import styles from './page.module.scss'
+
 
 let map, tileLayer, addressMap, marker
 let layerOnMap = []
@@ -50,7 +53,7 @@ export default function Page() {
   const giftModal = useRef()
   const giftModalMessage = useRef()
   const [activeTab, setActiveTab] = useState('issues')
-  const mounted = useClientMounted()
+
   const params = useParams()
   const { address, isConnected } = useAccount()
   const router = useRouter()
@@ -58,6 +61,7 @@ export default function Page() {
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   })
+  const mounted = useClientMounted()
 
   const openModal = (e, item) => {
     e.target.innerText = `Sending...`
@@ -515,12 +519,17 @@ Direction
       .addTo(map)
   }
 
+  const handleMapInit = () => {
+
+   mapInit()
+  }
+
   useEffect(() => {
     const mapContainer = document.getElementById('map')
 
     // Leaflet has a method to check if a container has a map
     if (mapContainer && !mapContainer._leaflet_id) {
-      mapInit()
+      // mapInit()
     }
 
     /**
@@ -539,6 +548,15 @@ Direction
 
       <aside className={`${styles.aside} flex flex-column`}>
         <ul className={`${styles.tab} flex flex-row align-items-center justify-content-center w-100`}>
+          <li>
+            <button
+              onClick={() => {
+                handleMapInit()
+              }}
+            >
+              Init Map
+            </button>
+          </li>
           <li>
             <button className={activeTab === 'chat' ? styles.activeTab : ''} onClick={() => setActiveTab('chat')}>
               Chat

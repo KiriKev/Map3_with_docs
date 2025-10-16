@@ -87,6 +87,7 @@ export default function Header() {
         </li>
         <li className={`flex justify-content-end align-items-center gap-050`}>
           <ConnectWallet />
+          
         </li>
       </ul>
     </header>
