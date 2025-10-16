@@ -9,7 +9,7 @@ import { initIssueContract, getIssueCount, getIssues } from '@/util/communicatio
 import { getProfile } from '@/util/api'
 import Web3 from 'web3'
 
-
+// import * as L from 'leaflet'
 
 import './../../node_modules/leaflet/dist/leaflet.css'
 import { useClientMounted } from '@/hooks/useClientMount'
@@ -587,7 +587,7 @@ Direction
 
         {activeTab === 'issues' && (
           <div className={`${styles.tabContent} ${styles.issue} relative d-f-c flex-column gap-1`}>
-            <Issues />
+            <Issues setIssueModal={setIssueModal} />
           </div>
         )}
 
@@ -971,7 +971,7 @@ const IssueModal = ({ setIssueModal }) => {
  * @param {*} param0
  * @returns
  */
-const Issues = () => {
+const Issues = ({setIssueModal}) => {
   const [posts, setPosts] = useState({ list: [] })
   const [postsLoaded, setPostsLoaded] = useState(0)
   const [isLoadedPoll, setIsLoadedPoll] = useState(false)
