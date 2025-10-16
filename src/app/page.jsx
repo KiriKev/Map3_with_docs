@@ -1,31 +1,28 @@
 'use client'
 
 import { useState, useEffect, useId, useRef, useCallback } from 'react'
-import { FluentProvider, webLightTheme, Badge } from '@fluentui/react-components'
 import Link from 'next/link'
 import moment from 'moment'
-import txIcon from '@/../public/icons/tx.svg'
 import { useParams, useRouter } from 'next/navigation'
-import { useConnectorClient, useConnections, useClient, networks, useWaitForTransactionReceipt, useAccount, useDisconnect, Connector, useConnect, useWriteContract, useReadContract } from 'wagmi'
-import { initPostContract, initPostCommentContract, getPosts, getHasLikedPost, getPollLikeCount, getPostCount, getVoteCountsForPoll, getVoterChoices } from '@/util/communication'
+import { useWaitForTransactionReceipt, useAccount, useWriteContract } from 'wagmi'
+import { initIssueContract, getIssueCount, getIssues } from '@/util/communication'
 import { getProfile } from '@/util/api'
-import PollTimer from '@/components/PollTimer'
-import { useAuth } from '@/contexts/AuthContext'
 import Web3 from 'web3'
-import { isPollActive } from '@/util/utils'
+import L, { geoJSON } from 'leaflet'
+import './../../node_modules/leaflet/dist/leaflet.css'
 import { useClientMounted } from '@/hooks/useClientMount'
 import { config } from '@/config/wagmi'
 import Logo from '@/../public/map3.svg'
 import abi from '@/abi/post.json'
-import commentAbi from '@/abi/post-comment.json'
-import { toast } from '@/components/NextToast'
-import Shimmer from '@/helper/Shimmer'
-import { InlineLoading } from '@/components/Loading'
+import issueAbi from '@/abi/issue.json'
 import Profile from '@/app/ui/Profile'
-import L, { geoJSON } from 'leaflet'
-import './../../node_modules/leaflet/dist/leaflet.css'
-import { CommentIcon, ShareIcon, RepostIcon, TipIcon, InfoIcon, BlueCheckMarkIcon, ThreeDotIcon } from '@/components/Icons'
+import MarkerIcon from '@/../public/marker-icon.png'
+import { MapSearchIcon, BlueCheckMarkIcon, ThreeDotIcon } from '@/components/Icons'
 import styles from './page.module.scss'
+
+let map, tileLayer, addressMap, marker
+let layerOnMap = []
+let shapeLayerGroup
 
 moment.defineLocale('en-short', {
   relativeTime: {
@@ -46,20 +43,13 @@ moment.defineLocale('en-short', {
   },
 })
 
-let map = ''
-let mapMarkers = []
-let showLayer = []
-
 export default function Page() {
-  const [posts, setPosts] = useState({ list: [] })
-  const [postsLoaded, setPostsLoaded] = useState(0)
-  const [isLoadedPoll, setIsLoadedPoll] = useState(false)
-  const [reactionCounter, setReactionCounter] = useState(0)
-  const [postCount, setPostCount] = useState()
-  const [showCommentModal, setShowCommentModal] = useState()
-  const { web3, contract } = initPostContract()
+  const [isMapInitialized, setIsMapInitialized] = useState(false)
+  const [issueModal, setIssueModal] = useState(false)
+  const { web3, contract } = initIssueContract()
   const giftModal = useRef()
   const giftModalMessage = useRef()
+  const [activeTab, setActiveTab] = useState('issues')
   const mounted = useClientMounted()
   const params = useParams()
   const { address, isConnected } = useAccount()
@@ -68,55 +58,6 @@ export default function Page() {
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   })
-
-  const loadMorePosts = async (totalPoll) => {
-    // 1. **Add a guard clause to prevent re-entry**
-    if (isLoadedPoll) return
-
-    // 2. Set to true *before* starting the async operation
-    setIsLoadedPoll(true)
-
-    try {
-      let postsPerPage = 20
-      let startIndex = totalPoll - postsLoaded - postsPerPage
-
-      // **Stop loading if all posts are accounted for**
-      if (postsLoaded >= totalPoll) {
-        console.log('All polls loaded.')
-        // We can return here, but still need to handle setIsLoadedPoll(false)
-      }
-
-      if (startIndex < 0) {
-        // Check if we are trying to load past the first post
-        postsPerPage = totalPoll - postsLoaded
-        startIndex = 0
-        if (postsPerPage <= 0) {
-          // All loaded
-          console.log('All polls loaded.')
-          return // Exit early
-        }
-      }
-
-      // ... (rest of your logic for calculating startIndex/postsPerPage) ...
-
-      // 3. Fetch the next batch of polls
-      console.log(startIndex + 1, postsPerPage)
-      const newPosts = await getPosts(startIndex + 1, postsPerPage, address)
-      console.log(`newPosts => `, newPosts)
-      newPosts.reverse()
-
-      if (Array.isArray(newPosts) && newPosts.length > 0) {
-        setPosts((prevPolls) => ({ list: [...prevPolls.list, ...newPosts] }))
-        setPostsLoaded((prevLoaded) => prevLoaded + newPosts.length)
-      }
-    } catch (error) {
-      console.error('Error loading more polls:', error)
-    } finally {
-      // 4. **Crucial: Set to false in finally block**
-      // This re-enables loading for the next scroll event.
-      setIsLoadedPoll(false)
-    }
-  }
 
   const openModal = (e, item) => {
     e.target.innerText = `Sending...`
@@ -132,6 +73,7 @@ export default function Page() {
     setMapPoints([])
     mapMarkers = []
   }
+
   function getRandomColor() {
     var letters = '0123456789ABCDEF'
     var color = '#'
@@ -140,6 +82,7 @@ export default function Page() {
     }
     return color
   }
+
   /**
    * Show markers on the map
    * @param {void} points
@@ -276,6 +219,11 @@ Direction
   }
 
   const mapInit = () => {
+    setIsMapInitialized(true)
+
+    // let mapMarkers = []
+    // let showLayer = []
+
     let southWest = L.latLng(38.1798206357761, 48.21865389083308),
       northEast = L.latLng(38.30520008275403, 48.345629549549045),
       bounds = L.latLngBounds(southWest, northEast)
@@ -566,8 +514,14 @@ Direction
       })
       .addTo(map)
   }
+
   useEffect(() => {
-    mapInit()
+    const mapContainer = document.getElementById('map')
+
+    // Leaflet has a method to check if a container has a map
+    if (mapContainer && !mapContainer._leaflet_id) {
+      mapInit()
+    }
 
     /**
      * 
@@ -577,23 +531,74 @@ Direction
       setPolls({ list: res })
     })
      */
-
-    // getPostCount().then((count) => {
-    //   const totalPoll = web3.utils.toNumber(count)
-    //   setPostCount(totalPoll)
-
-    //   if (postsLoaded === 0 && !isLoadedPoll) {
-    //     loadMorePosts(totalPoll)
-    //   }
-    // })
   }, []) // Added necessary dependencies  [isLoadedPoll, postsLoaded]
 
   return (
     <div className={`${styles.page} ms-motion-slideDownIn`}>
-      {showCommentModal && <CommentModal item={showCommentModal} 
-      setShowCommentModal={setShowCommentModal} />}
+      {issueModal && <IssueModal setIssueModal={setIssueModal} />}
 
-      <div id={`map`} className={`${styles.map}`}/>
+      <aside className={`${styles.aside} flex flex-column`}>
+        <ul className={`${styles.tab} flex flex-row align-items-center justify-content-center w-100`}>
+          <li>
+            <button className={activeTab === 'chat' ? styles.activeTab : ''} onClick={() => setActiveTab('chat')}>
+              Chat
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'issues' ? styles.activeTab : ''} onClick={() => setActiveTab('issues')}>
+              Issues
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'events' ? styles.activeTab : ''} onClick={() => setActiveTab('events')}>
+              Events
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'proposals' ? styles.activeTab : ''} onClick={() => setActiveTab('proposals')}>
+              Proposals
+            </button>
+          </li>
+        </ul>
+
+        {activeTab === 'chat' && (
+          <div className={`${styles.tabContent} ${styles.chat} relative d-f-c`}>
+            <iframe src="//hup.social" frameBorder="0" />
+          </div>
+        )}
+
+        {activeTab === 'issues' && (
+          <div className={`${styles.tabContent} ${styles.issue} relative d-f-c flex-column gap-1`}>
+            <Issues />
+          </div>
+        )}
+
+        {activeTab === 'events' && (
+          <div className={`${styles.tabContent} ${styles.issue} relative`}>
+            <Issues />
+          </div>
+        )}
+
+        {activeTab === 'proposals' && (
+          <div className={`${styles.tabContent} ${styles.proposal} relative`}>
+            <Issues />
+          </div>
+        )}
+      </aside>
+
+      <div id={`map`} className={`${styles.map}`} />
+    </div>
+  )
+}
+/**
+ * No data in tab content
+ * @param {*} param0
+ * @returns
+ */
+const NoData = ({ name }) => {
+  return (
+    <div>
+      <p>No {name} yet.</p>
     </div>
   )
 }
@@ -626,14 +631,14 @@ const Nav = ({ item }) => {
   )
 }
 
-const CommentModal = ({ item, setShowCommentModal }) => {
+const IssueModal = ({ setIssueModal }) => {
   const [hasLiked, setHasLiked] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const isMounted = useClientMounted()
   const [commentContent, setCommentContent] = useState('')
   const { address, isConnected } = useAccount()
-  const { web3, contract } = initPostCommentContract()
+  const { web3, contract } = initIssueContract()
   const { data: hash, isPending: isSigning, error: submitError, writeContract } = useWriteContract()
   const {
     isLoading: isConfirming,
@@ -645,43 +650,6 @@ const CommentModal = ({ item, setShowCommentModal }) => {
 
   const getHasLiked = async () => {
     return isConnected ? await getHasLikedPost(id, address) : false
-  }
-
-  const postComment = (e, id) => {
-    e.stopPropagation()
-
-    if (!isConnected) {
-      console.log(`Please connect your wallet first`, 'error')
-      return
-    }
-    //  const web3 = new Web3(window.lukso)
-
-    //   // // Create a Contract instance
-    //   const contract = new web3.eth.Contract(commentAbi, process.env.NEXT_PUBLIC_CONTRACT_POST_COMMENT)
-
-    //     window.lukso.request({ method: 'eth_requestAccounts' }).then((accounts) => {
-    //       contract.methods
-    //         .addComment(web3.utils.toNumber(id), commentContent, '')
-    //         .send({
-    //           from: accounts[0],
-    //         })
-    //         .then((res) => {
-    //           console.log(res)
-    //           toast(`Done`)
-    //         })
-    //         .catch((error) => {
-    //           console.log(error)
-    //           toast.dismiss(t)
-    //         })
-    //     })
-    //     //-------------------------------
-
-    writeContract({
-      abi: commentAbi,
-      address: process.env.NEXT_PUBLIC_CONTRACT_POST_COMMENT,
-      functionName: 'addComment',
-      args: [web3.utils.toNumber(id), 0, commentContent, ''],
-    })
   }
 
   const unlikePost = (e, id) => {
@@ -700,7 +668,178 @@ const CommentModal = ({ item, setShowCommentModal }) => {
     })
   }
 
+  const createIssue = (e) => {
+    e.preventDefault()
+
+    if (!isConnected) {
+      console.log(`Please connect your wallet first`, 'error')
+      return
+    }
+
+    const formData = new FormData(e.target)
+    const metadata = ''
+    const title = formData.get('title')
+    const category = formData.get('category')
+    const coordination = formData.get('coordination')
+    const address1 = formData.get('address1')
+    const content = formData.get('content')
+    const amount = formData.get('amount')
+
+    const errors = {}
+
+    //    const web3 = new Web3(window.lukso)
+
+    // // // Create a Contract instance
+    // const contract = new web3.eth.Contract(issueAbi, process.env.NEXT_PUBLIC_CONTRACT_ISSUE)
+
+    //   window.lukso.request({ method: 'eth_requestAccounts' }).then((accounts) => {
+    //     contract.methods
+    //       .createIssue(metadata, "title", "category", "coordination", "address1", "content", 100)
+    //       .send({
+    //         from: accounts[0],
+    //         value: 0
+    //       })
+    //       .then((res) => {
+    //         console.log(res)
+    //         toast(`Done`)
+    //       })
+    //       .catch((error) => {
+    //         console.log(error)
+    //         toast.dismiss(t)
+    //       })
+    //   })
+    //   //-------------------------------
+
+    console.log(content)
+
+    writeContract({
+      abi: issueAbi,
+      address: process.env.NEXT_PUBLIC_CONTRACT_ISSUE,
+      functionName: 'createIssue',
+      args: [metadata, title, category, coordination, address1, content, 100],
+    })
+  }
+
+  const addressMapInit = () => {
+    let cloudmadeUrl = 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+      cloudmade = new L.TileLayer(cloudmadeUrl, { maxZoom: 19 })
+
+    let southWest = L.latLng(38.1798206357761, 48.21865389083308),
+      northEast = L.latLng(38.30520008275403, 48.345629549549045),
+      bounds = L.latLngBounds(southWest, northEast)
+
+    addressMap = new L.Map('addressMap', {
+      zoomSnap: 0.5,
+      // maxBounds: bounds,
+      fullscreenControl: true,
+      layers: [cloudmade],
+      center: new L.LatLng(-40.150168234083736, -71.31541448757797),
+      zoom: 14,
+    })
+
+    let MyCustomMarker = L.Icon.extend({
+      options: {
+        shadowUrl: null,
+        iconAnchor: new L.Point(12, 12),
+        iconSize: new L.Point(25, 41),
+        iconUrl: MarkerIcon.src,
+      },
+    })
+
+    var greenIcon = L.icon({
+      shadowUrl: null,
+      iconAnchor: new L.Point(12, 12),
+      iconSize: new L.Point(25, 41),
+      iconUrl: MarkerIcon.src,
+    })
+
+    let marker = new L.marker([-40.150168234083736, -71.31541448757797], {
+      draggable: true,
+      autoPan: true,
+      icon: greenIcon,
+    }).addTo(addressMap)
+
+    addressMap.on('drag', (event) => {
+      // console.log(addressMap.getCenter())
+      marker.setLatLng(addressMap.getCenter())
+      document.querySelector('#address_location').value = `${marker.getLatLng().lat}, ${marker.getLatLng().lng}`
+      document.querySelector('#addressMap span').innerText = `${marker.getLatLng().lat}, ${marker.getLatLng().lng}`
+    })
+
+    marker.on('dragend', (event) => {
+      console.log(marker.getLatLng())
+      document.querySelector(`[name='coordination']`).value = `${marker.getLatLng().lat}, ${marker.getLatLng().lng}`
+      //document.querySelector('#addressMap span').innerText = `${marker.getLatLng().lat}, ${marker.getLatLng().lng}`
+
+      var requestOptions = {
+        method: 'GET',
+        redirect: 'follow',
+      }
+
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${marker.getLatLng().lat}&lon=${marker.getLatLng().lng}&format=jsonv2&accept-language=fa`, requestOptions)
+        .then((response) => response.json())
+        .then((result) => {
+          console.log(result)
+          document.querySelector(`[name='address1']`).value = `${result.display_name}`
+        })
+        .catch((error) => console.log('error', error))
+    })
+
+    tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      apikey: '<your apikey>',
+      attribution: '',
+      subdomains: 'abcd',
+      minZoom: 0,
+      maxZoom: 20,
+      ext: 'png',
+    }).addTo(addressMap)
+
+    // Add a fresh layer, to group the shapes
+    shapeLayerGroup = L.layerGroup().addTo(addressMap)
+
+    var editableLayers = new L.FeatureGroup()
+    addressMap.addLayer(editableLayers)
+
+    var options = {
+      position: 'topright',
+      draw: {
+        polyline: {
+          shapeOptions: {
+            color: '#f357a1',
+            weight: 10,
+          },
+        },
+        polygon: {
+          allowIntersection: false, // Restricts shapes to simple polygons
+          drawError: {
+            color: '#e1e100', // Color the shape will turn when intersects
+            message: "<strong>Oh snap!<strong> you can't draw that!", // Message that will show when intersect
+          },
+          shapeOptions: {
+            color: '#FF5A47',
+          },
+        },
+        circlemarker: false,
+        rectangle: false,
+        marker: {
+          icon: new MyCustomMarker(),
+        },
+      },
+      edit: {
+        featureGroup: editableLayers, //REQUIRED!!
+        remove: false,
+      },
+    }
+  }
+
   useEffect(() => {
+    const mapContainer = document.getElementById('addressMap')
+
+    // Leaflet has a method to check if a container has a map
+    if (mapContainer && !mapContainer._leaflet_id) {
+      addressMapInit()
+    }
+
     // getHasLiked()
     //   .then((result) => {
     //     setHasLiked(result)
@@ -711,7 +850,7 @@ const CommentModal = ({ item, setShowCommentModal }) => {
     //     setError(`⚠️`)
     //     setLoading(false)
     //   })
-  }, [item])
+  }, [])
 
   // if (loading) {
   //   return <InlineLoading />
@@ -722,57 +861,105 @@ const CommentModal = ({ item, setShowCommentModal }) => {
   }
 
   return (
-    <div className={`${styles.commentModal} animate fade`} onClick={() => setShowCommentModal()}>
-      <div className={`${styles.commentModal__container}`} onClick={(e) => e.stopPropagation()}>
-        <header className={`${styles.commentModal__container__header}`}>
-          <div className={``} aria-label="Close" onClick={() => setShowCommentModal()}>
+    <div className={`${styles.issueModal} animate fade`} onClick={() => setIssueModal()}>
+      <div className={`${styles.issueModal__container}`} onClick={(e) => e.stopPropagation()}>
+        <header className={`${styles.issueModal__container__header}`}>
+          <div className={``} aria-label="Close" onClick={() => setIssueModal()}>
             Cancel
           </div>
           <div className={`flex-1`}>
-            <h3>Post your reply</h3>
+            <h3>Create issue</h3>
           </div>
-          <div className={`pointer`} onClick={(e) => updateStatus(e)}>
-            {isSigning ? `Signing...` : isConfirming ? 'Confirming...' : status && status.content !== '' ? `Update` : `Share`}
-          </div>
+          <div></div>
         </header>
 
-        <main className={`${styles.commentModal__container__main}`}>
-          <article className={`${styles.commentModal__post}`}>
+        <main className={`${styles.issueModal__container__main}`}>
+          <article className={`${styles.issueModal__post}`}>
             <section className={`flex flex-column align-items-start justify-content-between`}>
-              <header className={`${styles.commentModal__post__header}`}>
-                <Profile creator={item.creator} createdAt={item.createdAt} />
-              </header>
-              <main className={`${styles.commentModal__post__main} w-100 flex flex-column grid--gap-050`}>
-                <div
-                  className={`${styles.post__content} `}
-                  // onClick={(e) => e.stopPropagation()}
-                  id={`post${item.postId}`}
-                >
-                  {item.content}
-                </div>
+              <header className={`${styles.issueModal__post__header}`}>{/* <Profile creator={item.creator} createdAt={item.createdAt} /> */}</header>
+              <main className={`${styles.issueModal__post__main} w-100 flex flex-column grid--gap-050`}>
+                <form className={`form`} onSubmit={(e) => createIssue(e)}>
+                  <div className={`form-group`}>
+                    <label htmlFor="">Title</label>
+                    <input className={`form-input`} type="text" name="title" id="" placeholder={`Title`} />
+                  </div>
+                  <div className={`form-group`}>
+                    <label htmlFor="">Description</label>
+                    <textarea className={`form-input`} name="content" id="" placeholder={`Description`}></textarea>
+                  </div>
+                  <div className={`form-group`}>
+                    <label htmlFor="">Category</label>
+                    <select name="category" id="">
+                      <option value="">Infrastructure</option>
+                      <option value="">Vandalism</option>
+                      <option value="">Waste management</option>
+                      <option value="">Crime</option>
+                    </select>
+                  </div>
+                  <div className={`form-group`}>
+                    <label htmlFor="">Coordination</label>
+                    <input className={`form-input`} type="text" name="coordination" id="" placeholder={`x,y`} />
+                    <details>
+                      <summary>Open Map</summary>
+                      <div id="addressMap" className={styles.addressMap}>
+                        <span className={styles.latlong} />
+                      </div>
+                      <input type="hidden" value="" id="address_location" name="address_location" />
+                    </details>
+                  </div>
+                  <div className={`form-group`}>
+                    <label htmlFor="">Address</label>
+                    <input className={`form-input`} type="text" name="address1" id="" placeholder={`Street`} />
+                  </div>
+                  <div className={`form-group`}>
+                    <fieldset className="flex flex-column" style={{ padding: `.4rem` }}>
+                      <legend>What should happen next?</legend>
+
+                      <div className={`flex gap-025`}>
+                        <input type="radio" name="type" id="report" />
+                        <label htmlFor="report">Just report it</label>
+                      </div>
+
+                      <div className={`flex gap-025`}>
+                        <input type="radio" name="type" id="funding" />
+                        <label htmlFor="funding">Request community funding</label>
+                      </div>
+
+                      <div className={`flex gap-025`}>
+                        <input type="radio" name="type" id="volunteer" />
+                        <label htmlFor="volunteer">Find volunteers</label>
+                      </div>
+                    </fieldset>
+                  </div>
+                  <div className={`form-group`}>
+                    <label htmlFor="">Amount</label>
+                    <input className={`form-input`} type="text" name="amount" id="" placeholder={`Amount`} defaultValue={0} />
+                  </div>
+                  <button type="submit" className="btn">
+                    Create
+                  </button>
+                </form>
               </main>
             </section>
           </article>
         </main>
-
-        <footer className={`${styles.commentModal__footer}  flex flex-column align-items-start`}>
-          <ConnectedProfile addr={address} />
-          <textarea autoFocus defaultValue={commentContent} onInput={(e) => setCommentContent(e.target.value)} placeholder={`Reply to ${item.creator.slice(0, 4)}…${item.creator.slice(38)}`} />
-          <button className="btn" onClick={(e) => postComment(e, item.postId)}>
-            Post comment
-          </button>
-        </footer>
       </div>
     </div>
   )
 }
 
 /**
- * Like
+ * Issues
  * @param {*} param0
  * @returns
  */
-const Like = ({ id, likeCount, hasLiked }) => {
+const Issues = () => {
+  const [posts, setPosts] = useState({ list: [] })
+  const [postsLoaded, setPostsLoaded] = useState(0)
+  const [isLoadedPoll, setIsLoadedPoll] = useState(false)
+  const [isMapInitialized, setIsMapInitialized] = useState(false)
+  const [reactionCounter, setReactionCounter] = useState(0)
+  const [postCount, setPostCount] = useState()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const isMounted = useClientMounted()
@@ -817,19 +1004,99 @@ const Like = ({ id, likeCount, hasLiked }) => {
       args: [id],
     })
   }
+  const loadMorePosts = async (totalPoll) => {
+    // 1. **Add a guard clause to prevent re-entry**
+    if (isLoadedPoll) return
+
+    // 2. Set to true *before* starting the async operation
+    setIsLoadedPoll(true)
+
+    try {
+      let postsPerPage = 20
+      let startIndex = totalPoll - postsLoaded - postsPerPage
+
+      // **Stop loading if all posts are accounted for**
+      if (postsLoaded >= totalPoll) {
+        console.log('All polls loaded.')
+        // We can return here, but still need to handle setIsLoadedPoll(false)
+      }
+
+      if (startIndex < 0) {
+        // Check if we are trying to load past the first post
+        postsPerPage = totalPoll - postsLoaded
+        startIndex = 0
+        if (postsPerPage <= 0) {
+          // All loaded
+          console.log('All polls loaded.')
+          return // Exit early
+        }
+      }
+
+      // ... (rest of your logic for calculating startIndex/postsPerPage) ...
+
+      // 3. Fetch the next batch of polls
+      console.log(startIndex + 1, postsPerPage)
+      const newPosts = await getIssues(startIndex + 1, postsPerPage)
+      console.log(`newPosts => `, newPosts)
+      newPosts.reverse()
+
+      if (Array.isArray(newPosts) && newPosts.length > 0) {
+        setPosts((prevPolls) => ({ list: [...prevPolls.list, ...newPosts] }))
+        setPostsLoaded((prevLoaded) => prevLoaded + newPosts.length)
+      }
+    } catch (error) {
+      console.error('Error loading more polls:', error)
+    } finally {
+      // 4. **Crucial: Set to false in finally block**
+      // This re-enables loading for the next scroll event.
+      setIsLoadedPoll(false)
+    }
+  }
+
+  const showIssue = (item) => {
+    // Clean map from markers
+    //removeMarkerLayer()
+    // Recognize the point type(marker || geoJSON)
+    // Else
+
+    let myIcon = L.icon({
+      iconUrl: `${MarkerIcon.src}`,
+      iconSize: [25, 41],
+      iconAnchor: [25, 41],
+      popupAnchor: [-15, -41],
+    })
+
+    let marker = L.marker(item.coordination.split(','), { icon: myIcon })
+
+    marker.bindPopup(`<table  style='width:200px;font-size:18px;padding:.5rem'>
+    <tbody>
+    <tr>
+    <td>${item.title}<td>
+    </tr>
+    <tr>
+    <td>
+    <a style="font-family:vazir" target='_blank' href='https://www.google.com/maps/dir/@${item.coordination}/,48.3079047,14z'>
+    Direction
+    </a>
+    </td>
+    </tr>
+    </tbody></table>`)
+
+    marker.addTo(map)
+    // mapMarkers.push({ categoryId: categoryId, marker: marker })
+  }
 
   useEffect(() => {
-    // getHasLiked()
-    //   .then((result) => {
-    //     setHasLiked(result)
-    //     setLoading(false)
-    //   })
-    //   .catch((err) => {
-    //     console.log(err)
-    //     setError(`⚠️`)
-    //     setLoading(false)
-    //   })
-  }, [id])
+    console.log(map)
+
+    getIssueCount().then((count) => {
+      setPostCount(Number(count))
+
+      if (postsLoaded === 0 && !isLoadedPoll) {
+        loadMorePosts(Number(count))
+      }
+    })
+  }, [])
 
   // if (loading) {
   //   return <InlineLoading />
@@ -840,15 +1107,44 @@ const Like = ({ id, likeCount, hasLiked }) => {
   }
 
   return (
-    <button onClick={(e) => (hasLiked ? unlikePost(e, id) : likePost(e, id))}>
-      <svg width="18" height="18" viewBox="0 0 18 18" fill={hasLiked ? `#EC3838` : `none`} xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M12.6562 3.75C14.7552 3.75003 16.1562 5.45397 16.1562 7.53125V7.54102C16.1563 8.03245 16.1552 8.68082 15.8682 9.48828C15.5795 10.3003 15.0051 11.2653 13.8701 12.4004C12.0842 14.1864 10.1231 15.619 9.37988 16.1406C9.15102 16.3012 8.85009 16.3012 8.62109 16.1406C7.87775 15.6191 5.91688 14.1865 4.13086 12.4004H4.12988C2.99487 11.2653 2.42047 10.3003 2.13184 9.48828C1.84477 8.68054 1.84374 8.03163 1.84375 7.54004V7.53125C1.84375 5.45396 3.24485 3.75 5.34375 3.75C6.30585 3.75 7.06202 4.19711 7.64844 4.80273C8.01245 5.17867 8.31475 5.61978 8.56445 6.06152L9 6.83105L9.43555 6.06152C9.68527 5.61978 9.98756 5.17867 10.3516 4.80273C10.938 4.1971 11.6942 3.75 12.6562 3.75Z"
-          stroke={hasLiked ? `#EC3838` : `#424242`}
-        />
-      </svg>
-      <span>{likeCount}</span>
-    </button>
+    <div className={`${styles.grid} flex flex-column w-100`}>
+      {posts &&
+        posts.list.length > 0 &&
+        posts.list.map((item, i) => {
+          return (
+            <article key={i} className={`${styles.post} animate fade`}>
+              {/* onClick={() => router.push(`p/${item.postId}`)} */}
+              <section data-name={item.name} className={`flex flex-column align-items-start justify-content-between`}>
+                <header className={`${styles.post__header} flex align-items-start justify-content-between`}>
+                  {<Profile creator={item.creator} createdAt={item.createdAt} />}
+                  <Nav item={item} />
+                </header>
+                <main className={`${styles.post__main} w-100 flex flex-column grid--gap-050`}>
+                  <h3>{item.title}</h3>
+                  <div className={`${styles.post__content} `}>{item.content}</div>
+
+                  <div onClick={(e) => showIssue(item)} className={`${styles.post__actions} flex flex-row align-items-center justify-content-start`}>
+                    <button title={item.coordination}>
+                      <MapSearchIcon />
+                    </button>
+                  </div>
+                </main>
+              </section>
+              {i < posts.list.length - 1 && <hr />}
+            </article>
+          )
+        })}
+
+      {!posts && (
+        <>
+          <NoData name={`issue`} />
+        </>
+      )}
+
+      <button className="btn" onClick={() => setIssueModal(true)}>
+        Create issue
+      </button>
+    </div>
   )
 }
 

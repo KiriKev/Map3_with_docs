@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./../Counters.sol";
-import "./IssueEvent.sol";
-import "./IssueError.sol";
+import "./Map3Event.sol";
+import "./Map3Error.sol";
 
 /// @title Issue
 /// @author Aratta Labs
@@ -39,10 +39,10 @@ contract Issue is Ownable(msg.sender), Pausable, ReentrancyGuard {
         /// @dev The post's metadata, which can contain a URI or other off-chain data.
         string metadata;
         /// @dev The main text content of the post.
+        string title;
         string content;
-        string lat;
-        string long;
         string category;
+        string coordination;
         string address1;
         /// @dev The Unix timestamp when the post was created.
         uint256 createdAt;
@@ -59,9 +59,9 @@ contract Issue is Ownable(msg.sender), Pausable, ReentrancyGuard {
     struct IssueWithoutMapping {
         uint256 issueId;
         string metadata;
+        string title;
         string content;
-        string lat;
-        string long;
+        string coordination;
         string category;
         string address1;
         uint256 createdAt;
@@ -85,10 +85,10 @@ contract Issue is Ownable(msg.sender), Pausable, ReentrancyGuard {
         IssueData storage newIssue = issues[issueId];
 
         newIssue.metadata = "";
+        newIssue.title = unicode"firs issue";
         newIssue.content = unicode"This is the first issue on Map3";
-        newIssue.lat = "-40.150168234083736";
-        newIssue.long = "-71.31541448757797";
-        newIssue.category = "event";
+        newIssue.coordination = "-40.150168234083736, -71.31541448757797";
+        newIssue.category = "Infrastructure";
         newIssue.createdAt = block.timestamp;
         newIssue.creator = _msgSender();
         newIssue.isDeleted = false;
@@ -104,7 +104,7 @@ contract Issue is Ownable(msg.sender), Pausable, ReentrancyGuard {
 
     // Post Management
     /// @notice Creates a new status post.
-    function createIssue(string memory _metadata, string memory _content) external payable {
+    function createIssue(string memory _metadata, string memory _title, string memory _category, string memory _coordination, string memory _address1, string memory _content, uint _amount) external payable {
         require(msg.value >= fee, "Insufficient payment for post creation.");
         require(bytes(_content).length > 0, "Post content cannot be empty.");
 
@@ -113,7 +113,12 @@ contract Issue is Ownable(msg.sender), Pausable, ReentrancyGuard {
         IssueData storage newIssue = issues[issueId];
 
         newIssue.metadata = _metadata;
+        newIssue.title = _title;
+        newIssue.coordination = _coordination;
+        newIssue.address1 = _address1;
+        newIssue.category = _category;
         newIssue.content = _content;
+        newIssue.amount = _amount;
         newIssue.createdAt = block.timestamp;
         newIssue.creator = _msgSender();
         newIssue.isDeleted = false;
@@ -197,9 +202,9 @@ contract Issue is Ownable(msg.sender), Pausable, ReentrancyGuard {
             IssueWithoutMapping({
                 issueId: _index,
                 metadata: issue.metadata,
+                title: issue.title,
                 content: issue.content,
-                lat: issue.lat,
-                long: issue.long,
+                coordination: issue.coordination,
                 category: issue.category,
                 address1: issue.address1,
                 createdAt: issue.createdAt,
@@ -225,9 +230,9 @@ contract Issue is Ownable(msg.sender), Pausable, ReentrancyGuard {
             issuesArray[i] = IssueWithoutMapping({
                 issueId: issueId,
                 metadata: issue.metadata,
+                title: issue.title,
                 content: issue.content,
-                lat: issue.lat,
-                long: issue.long,
+                coordination: issue.coordination,
                 category: issue.category,
                 address1: issue.address1,
                 createdAt: issue.createdAt,

@@ -9,7 +9,7 @@ export default function Header() {
         <li className={`flex align-items-end`}>
           <Link href={`/`} className={`${styles.logo}`}>
             <svg width="175" height="175" viewBox="0 0 175 175" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clip-path="url(#clip0_1623_744)">
+              <g clipPath="url(#clip0_1623_744)">
                 <path d="M102.24 136.393C99.1091 140.666 96.8132 142.892 92.1737 146.459V174.5H163.356L102.24 136.393Z" fill="url(#paint0_linear_1623_744)" />
                 <path d="M40.4051 145.021V174.5H0.140625V69.5248L26.7439 86.781C16.6778 111.227 24.5869 134.955 40.4051 145.021Z" fill="url(#paint1_linear_1623_744)" />
                 <path d="M92.1737 0.5V72.4008C99.5128 77.0748 101.657 80.3663 105.719 86.6031L105.835 86.781L174.86 130.64V69.5248C133.876 69.5248 108.802 38.9506 107.992 0.5H92.1737Z" fill="url(#paint2_linear_1623_744)" />
@@ -18,8 +18,8 @@ export default function Header() {
                 <path d="M48.3142 0.5V67.3678C58.7301 61.7429 74.2006 61.6797 85.7026 67.3678V0.5H48.3142Z" fill="url(#paint4_linear_1623_744)" />
                 <path d="M174.86 0.5H138.909C144.162 23.2134 152.438 30.7581 174.86 37.1694V0.5Z" fill="url(#paint5_linear_1623_744)" />
                 <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
+                  fillRule="evenodd"
+                  clipRule="evenodd"
                   d="M48.3142 0.5H40.4051V34.8834C40.4051 38.1699 36.877 40.2494 34.0017 38.6577L0.140625 19.9132V69.5248L26.7439 86.781C16.6778 111.227 24.5869 134.955 40.4051 145.021V174.5H92.1737V146.459C96.8132 142.892 99.1091 140.666 102.24 136.393L163.356 174.5H174.86V130.64L105.835 86.781L105.719 86.6031C101.657 80.3663 99.5128 77.0748 92.1737 72.4008V0.5H85.7026V67.3678C74.2006 61.6797 58.7301 61.7429 48.3142 67.3678V0.5Z"
                   fill="#E7EBEE"
                 />
@@ -27,8 +27,8 @@ export default function Header() {
                 <path d="M138.909 0.5H133.876C136.752 24.2273 150.413 38.6577 174.86 42.2025V37.1694C152.438 30.7581 144.162 23.2134 138.909 0.5Z" fill="#E7EBEE" />
                 <g filter="url(#filter0_d_1623_744)">
                   <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
+                    fillRule="evenodd"
+                    clipRule="evenodd"
                     d="M84.8901 65.93C79.209 63.6628 73.1206 62.4972 66.9726 62.5C60.8235 62.498 54.7343 63.6647 49.0527 65.9335C43.3711 68.2022 38.2084 71.5285 33.8595 75.7224C29.5106 79.9164 26.0606 84.8957 23.7067 90.3762C21.3528 95.8566 20.1411 101.731 20.1407 107.663C20.1255 117.919 23.8752 127.849 30.7249 135.692L62.2937 171.431C62.8712 172.085 63.589 172.61 64.3973 172.97C65.2057 173.33 66.0854 173.517 66.9757 173.517C67.8661 173.517 68.7458 173.33 69.5542 172.97C70.3625 172.61 71.0802 172.085 71.6577 171.431L103.167 135.746L103.227 135.677C110.076 127.833 113.826 117.902 113.811 107.645C113.808 101.714 112.594 95.841 110.239 90.3623C107.883 84.8835 104.432 79.906 100.083 75.714C95.7338 71.5219 90.5712 68.1973 84.8901 65.93Z"
                     fill="white"
                   />
@@ -43,8 +43,8 @@ export default function Header() {
                 </g>
               </g>
               <defs>
-                <filter id="filter0_d_1623_744" x="17.2646" y="62.5" width="99.422" height="119.644" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                  <feFlood flood-opacity="0" result="BackgroundImageFix" />
+                <filter id="filter0_d_1623_744" x="17.2646" y="62.5" width="99.422" height="119.644" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                  <feFlood floodOpacity="0" result="BackgroundImageFix" />
                   <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
                   <feMorphology radius="2.87603" operator="erode" in="SourceAlpha" result="effect1_dropShadow_1623_744" />
                   <feOffset dy="5.75207" />
@@ -55,28 +55,28 @@ export default function Header() {
                   <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1623_744" result="shape" />
                 </filter>
                 <linearGradient id="paint0_linear_1623_744" x1="102.537" y1="137.112" x2="117.679" y2="171.578" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#ECB919" />
-                  <stop offset="1" stop-color="#FFCD00" />
+                  <stop stopColor="#ECB919" />
+                  <stop offset="1" stopColor="#FFCD00" />
                 </linearGradient>
                 <linearGradient id="paint1_linear_1623_744" x1="0.140626" y1="70.9628" x2="36.81" y2="174.5" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#FC93DD" />
-                  <stop offset="1" stop-color="#F083C9" />
+                  <stop stopColor="#FC93DD" />
+                  <stop offset="1" stopColor="#F083C9" />
                 </linearGradient>
                 <linearGradient id="paint2_linear_1623_744" x1="93.6117" y1="0.500001" x2="175.579" y2="129.202" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#7FF677" />
-                  <stop offset="1" stop-color="#2ED559" />
+                  <stop stopColor="#7FF677" />
+                  <stop offset="1" stopColor="#2ED559" />
                 </linearGradient>
                 <linearGradient id="paint3_linear_1623_744" x1="38.9671" y1="2.65702" x2="28.1819" y2="35.7314" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#81F07C" />
-                  <stop offset="1" stop-color="#6FE577" />
+                  <stop stopColor="#81F07C" />
+                  <stop offset="1" stopColor="#6FE577" />
                 </linearGradient>
                 <linearGradient id="paint4_linear_1623_744" x1="87.5001" y1="0.5" x2="87.5001" y2="174.5" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#108DF5" />
-                  <stop offset="1" stop-color="#0574FF" />
+                  <stop stopColor="#108DF5" />
+                  <stop offset="1" stopColor="#0574FF" />
                 </linearGradient>
                 <linearGradient id="paint5_linear_1623_744" x1="141.066" y1="0.499995" x2="173.422" y2="36.4504" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#74F776" />
-                  <stop offset="1" stop-color="#6EEA73" />
+                  <stop stopColor="#74F776" />
+                  <stop offset="1" stopColor="#6EEA73" />
                 </linearGradient>
                 <clipPath id="clip0_1623_744">
                   <rect x="0.140625" y="0.5" width="174.719" height="174" rx="50" fill="white" />

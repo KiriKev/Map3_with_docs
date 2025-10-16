@@ -1,4 +1,5 @@
 import Web3 from 'web3'
+import issueAbi from '@/abi/issue.json'
 import postAbi from '@/abi/post.json'
 import statusAbi from '@/abi/status.json'
 import commentAbi from '@/abi/post-comment.json'
@@ -6,7 +7,7 @@ import commentAbi from '@/abi/post-comment.json'
 /**
  * Initialize post contract
  */
-export function initPostContract() {
+export function initIssueContract() {
   const rpcUrl = process.env.NEXT_PUBLIC_LUKSO_PROVIDER
 
   if (!rpcUrl) throw new Error('WEB3_RPC_URL is not defined in environment variables.')
@@ -15,7 +16,7 @@ export function initPostContract() {
   const web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl))
 
   // Create a Contract instance
-  const contract = new web3.eth.Contract(postAbi, process.env.NEXT_PUBLIC_CONTRACT_POST)
+  const contract = new web3.eth.Contract(issueAbi, process.env.NEXT_PUBLIC_CONTRACT_ISSUE)
   return { web3, contract }
 }
 
@@ -51,11 +52,11 @@ export function initStatusContract() {
   return { web3, contract }
 }
 
-export async function getStatus(address) {
-  const { web3, contract } = initStatusContract()
+export async function getIssueCount() {
+  const { web3, contract } = initIssueContract()
 
   try {
-    const result = await contract.methods.statuses(address).call()
+    const result = await contract.methods.issueCount().call()
     return result
   } catch (error) {
     console.error('Error fetching contract data with Web3.js:', error)
@@ -63,11 +64,11 @@ export async function getStatus(address) {
   }
 }
 
-export async function getMaxLength() {
-  const { web3, contract } = initStatusContract()
+export async function getIssues(index, count) {
+  const { web3, contract } = initIssueContract()
 
   try {
-    const result = await contract.methods.maxLength().call()
+    const result = await contract.methods.getIssues(index, count).call()
     return result
   } catch (error) {
     console.error('Error fetching contract data with Web3.js:', error)

@@ -1,0 +1,747 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_metadata",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_title",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_category",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_coordination",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_address1",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_content",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_amount",
+				"type": "uint256"
+			}
+		],
+		"name": "createIssue",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_issueId",
+				"type": "uint256"
+			}
+		],
+		"name": "deleteIssue",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_issueId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "_key",
+				"type": "bytes32"
+			}
+		],
+		"name": "delKey",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [],
+		"name": "EnforcedPause",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ExpectedPause",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ReentrancyGuardReentrantCall",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "IssueId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "metadata",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "content",
+				"type": "string"
+			}
+		],
+		"name": "IssueCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "IssueId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "deleter",
+				"type": "address"
+			}
+		],
+		"name": "IssueDeleted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "IssueId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "updater",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "newMetadata",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "newContent",
+				"type": "string"
+			}
+		],
+		"name": "IssueUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "pause",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "Paused",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_issueId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "_key",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "string",
+				"name": "_val",
+				"type": "string"
+			}
+		],
+		"name": "setKey",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "unpause",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "Unpaused",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_issueId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_metadata",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_content",
+				"type": "string"
+			}
+		],
+		"name": "updateIssue",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "Withdrawal",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "withdrawAll",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "blockStorage",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "commentManagerAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "creatorIssues",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fee",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_index",
+				"type": "uint256"
+			}
+		],
+		"name": "getIssueByIndex",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "issueId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "metadata",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "title",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "content",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "coordination",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "category",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "address1",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "createdAt",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "creator",
+						"type": "address"
+					},
+					{
+						"internalType": "bool",
+						"name": "isDeleted",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "isUpdated",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct Issue.IssueWithoutMapping",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_startIndex",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_count",
+				"type": "uint256"
+			}
+		],
+		"name": "getIssues",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "issueId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "metadata",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "title",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "content",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "coordination",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "category",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "address1",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "createdAt",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "creator",
+						"type": "address"
+					},
+					{
+						"internalType": "bool",
+						"name": "isDeleted",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "isUpdated",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct Issue.IssueWithoutMapping[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_issueId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "_key",
+				"type": "bytes32"
+			}
+		],
+		"name": "getKey",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "issueCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "_value",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "issues",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "metadata",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "title",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "content",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "category",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "coordination",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "address1",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "createdAt",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "isDeleted",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "isUpdated",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "paused",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
