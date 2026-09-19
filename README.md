@@ -1,7 +1,7 @@
 # 🚨 Map3 Core Contract: `Issue.sol`
 
 ## Demo link
-https://map3.aratta.dev/
+To Be Done (TBD)
 
 ## Walkthrough
 https://youtu.be/PAp2pBmNT8k
